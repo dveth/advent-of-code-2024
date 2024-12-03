@@ -19,11 +19,11 @@ func main() {
 
 func removePrefix(line string) (string, error) {
 	for {
-		if len(line) < 4 || !strings.Contains(line, "mul(") {
+		if len(line) < 4 {
 			return "", errors.New("Line doesn't contain 'mul'")
 		}
 		line = strings.TrimSpace(line)
-		if line[:4] != "mul(" {
+		if line[:4] != "mul(" && (len(line) > 3 && line[:4] != "do()") && (len(line) > 6 && line[:7] != "don't()") {
 			line = line[1:]
 		} else {
 			return line, nil
@@ -66,6 +66,7 @@ func getMulInstructionResult(line string) (int, error) {
 func processInput(filename string) (int, error) {
 	inputText := ""
 	total := 0
+	isProcessing := true
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -83,12 +84,29 @@ func processInput(filename string) (int, error) {
 			return total, nil
 		}
 		inputText = tempText
+		fmt.Printf("After prefix removal: %s\n", inputText)
+		fmt.Printf("Processing: %v\n", isProcessing)
+
+		// Check for do/don't
+		if len(inputText) > 3 && inputText[:4] == "do()" {
+			isProcessing = true
+			inputText = inputText[1:]
+			continue
+		}
+		if len(inputText) > 6 && inputText[:7] == "don't()" {
+			isProcessing = false
+			inputText = inputText[1:]
+			continue
+		}
+
 		result, err := getMulInstructionResult(inputText)
 		if err != nil {
 			inputText = inputText[4:]
 			continue
 		} else {
-			total += result
+			if isProcessing {
+				total += result
+			}
 			inputText = inputText[1:]
 		}
 	}
