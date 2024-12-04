@@ -86,6 +86,43 @@ func (g Grid) getDiagonalRightToLeftXMAS() int {
 	return reversedGrid.getDiagonalLeftToRightXMAS()
 }
 
+func (g Grid) getCountCrossXMAS() int {
+	count := 0
+	for i := 0; i < len(g); i++ {
+		for j := 0; j < len(g); j++ {
+			if g.doesPosHaveCrossXMAS(i, j) {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func (g Grid) doesPosHaveCrossXMAS(row int, col int) bool {
+	if row == 0 || row == len(g)-1 {
+		return false
+	}
+	if col == 0 || col == len(g)-1 {
+		return false
+	}
+	if g[row][col] != "A" {
+		return false
+	}
+	if g[row-1][col-1] == "M" && g[row-1][col+1] == "M" {
+		return g[row+1][col-1] == "S" && g[row+1][col+1] == "S"
+	}
+	if g[row-1][col-1] == "S" && g[row-1][col+1] == "S" {
+		return g[row+1][col-1] == "M" && g[row+1][col+1] == "M"
+	}
+	if g[row-1][col-1] == "S" && g[row-1][col+1] == "M" {
+		return g[row+1][col-1] == "S" && g[row+1][col+1] == "M"
+	}
+	if g[row-1][col-1] == "M" && g[row-1][col+1] == "S" {
+		return g[row+1][col-1] == "M" && g[row+1][col+1] == "S"
+	}
+	return false
+}
+
 func getGridFromFile(filename string) (Grid, error) {
 	var grid Grid
 	file, err := os.Open(filename)
@@ -109,7 +146,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	count := grid.getXMASCount()
+	count := grid.getCountCrossXMAS()
 	fmt.Printf("Full count: %d\n", count)
 }
 
