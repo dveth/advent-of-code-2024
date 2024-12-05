@@ -20,7 +20,6 @@ func main() {
 			for checkUpdateRulesBroken(rules, update) {
 				update.fix(rules)
 			}
-			fmt.Printf("Update after fix: %v\n", update)
 			invalidUpdates = append(invalidUpdates, update)
 		}
 	}
