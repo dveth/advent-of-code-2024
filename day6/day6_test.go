@@ -53,3 +53,38 @@ func TestGetPlayerFromFile(t *testing.T) {
 
 	}
 }
+
+func TestMarkVisited(t *testing.T) {
+	player := Player{
+		MovingDirection: "RIGHT",
+	}
+	pos := Pos{}
+	pos.markVisited(player)
+
+	want := Pos{
+		VisitedLeft:  false,
+		VisitedRight: true,
+		VisitedDown:  false,
+		VisitedUp:    false,
+	}
+
+	if pos.VisitedDown != want.VisitedDown || pos.VisitedUp != want.VisitedUp || pos.VisitedRight != want.VisitedRight || want.VisitedLeft != pos.VisitedLeft {
+		t.Fatalf("In markVisited, wanted %v, got %v\n", want, pos)
+	}
+}
+
+func TestVisitedCount(t *testing.T) {
+	grid, player, err := makeGridFromFile("testinput.txt")
+	if err != nil {
+		t.Fatalf("Received error from visitedCount: %s", err.Error())
+	}
+
+	want := 41
+	processPath(grid, player)
+	got := grid.visitedCount()
+
+	if want != got {
+		t.Logf("Current grid: \n%s\n", grid.gridToString())
+		t.Fatalf("In visitedCount, wanted %d, got %d\n", want, got)
+	}
+}

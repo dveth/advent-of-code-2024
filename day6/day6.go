@@ -2,11 +2,19 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	"os"
 )
 
 func main() {
-
+	grid, player, err := makeGridFromFile("puzzleInput.txt")
+	if err != nil {
+		panic(err)
+	}
+	processPath(grid, player)
+	count := grid.visitedCount()
+	fmt.Printf("Visited Count: %d", count)
 }
 
 type Grid [][]Pos
@@ -30,8 +38,11 @@ func (g Grid) gridToString() string {
 	for i := 0; i < len(g); i++ {
 		line := ""
 		for j := 0; j < len(g[i]); j++ {
-			if g[i][j].IsWall {
+			cell := g[i][j]
+			if cell.IsWall {
 				line += "#"
+			} else if cell.VisitedDown || cell.VisitedUp || cell.VisitedLeft || cell.VisitedRight {
+				line += "X"
 			} else {
 				line += "."
 			}
@@ -39,6 +50,19 @@ func (g Grid) gridToString() string {
 		result += line + "\n"
 	}
 	return result
+}
+
+func (g Grid) visitedCount() int {
+	count := 0
+	for i := 0; i < len(g); i++ {
+		for j := 0; j < len(g[i]); j++ {
+			cell := g[i][j]
+			if cell.VisitedDown || cell.VisitedUp || cell.VisitedLeft || cell.VisitedRight {
+				count++
+			}
+		}
+	}
+	return count
 }
 
 func makeGridFromFile(filename string) (Grid, Player, error) {
@@ -98,4 +122,102 @@ func makeGridFromFile(filename string) (Grid, Player, error) {
 	}
 
 	return grid, player, nil
+}
+
+func processPath(grid Grid, player Player) {
+	grid[player.Y][player.X].markVisited(player)
+
+Finished:
+	for {
+		var nextPos Pos
+		switch player.MovingDirection {
+		case "UP":
+			if player.Y < 1 {
+				break Finished
+			}
+			nextPos = grid[player.Y-1][player.X]
+		case "DOWN":
+			if player.Y > len(grid)-2 {
+				break Finished
+			}
+			nextPos = grid[player.Y+1][player.X]
+		case "RIGHT":
+			if player.X > len(grid[player.Y])-2 {
+				break Finished
+			}
+			nextPos = grid[player.Y][player.X+1]
+		case "LEFT":
+			if player.X < 1 {
+				break Finished
+			}
+			nextPos = grid[player.Y][player.X-1]
+		}
+		if !nextPos.IsWall {
+			hasVisited, err := nextPos.hasVisited(player)
+			if err != nil {
+				panic(err)
+			}
+			if hasVisited {
+				break Finished
+			}
+			player.move()
+			grid[player.Y][player.X].markVisited(player)
+		} else {
+			player.turn()
+			grid[player.Y][player.X].markVisited(player)
+		}
+	}
+}
+
+func (p *Pos) markVisited(player Player) {
+	switch player.MovingDirection {
+	case "UP":
+		p.VisitedUp = true
+	case "DOWN":
+		p.VisitedDown = true
+	case "RIGHT":
+		p.VisitedRight = true
+	case "LEFT":
+		p.VisitedLeft = true
+	}
+}
+
+func (p *Pos) hasVisited(player Player) (bool, error) {
+	switch player.MovingDirection {
+	case "UP":
+		return p.VisitedUp, nil
+	case "DOWN":
+		return p.VisitedDown, nil
+	case "RIGHT":
+		return p.VisitedRight, nil
+	case "LEFT":
+		return p.VisitedLeft, nil
+	}
+	return false, errors.New("Invalid player MovingDirection")
+}
+
+func (p *Player) move() {
+	switch p.MovingDirection {
+	case "UP":
+		p.Y -= 1
+	case "DOWN":
+		p.Y += 1
+	case "RIGHT":
+		p.X += 1
+	case "LEFT":
+		p.X -= 1
+	}
+}
+
+func (p *Player) turn() {
+	switch p.MovingDirection {
+	case "UP":
+		p.MovingDirection = "RIGHT"
+	case "DOWN":
+		p.MovingDirection = "LEFT"
+	case "RIGHT":
+		p.MovingDirection = "DOWN"
+	case "LEFT":
+		p.MovingDirection = "UP"
+	}
 }
