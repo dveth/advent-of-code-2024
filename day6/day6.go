@@ -8,6 +8,10 @@ import (
 )
 
 func main() {
+	part2()
+}
+
+func part1() {
 	grid, player, err := makeGridFromFile("puzzleInput.txt")
 	if err != nil {
 		panic(err)
@@ -17,7 +21,41 @@ func main() {
 	fmt.Printf("Visited Count: %d", count)
 }
 
+func part2() {
+	grid, player, err := makeGridFromFile("puzzleInput.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	count := 0
+
+	for i := 0; i < len(grid); i++ {
+		for j := 0; j < len(grid[i]); j++ {
+			duplicate := grid.copy()
+			if duplicate[i][j].IsWall {
+				continue
+			}
+			duplicate[i][j].IsWall = true
+			isLoop := processPath(duplicate, player)
+			if isLoop {
+				count += 1
+			}
+		}
+	}
+	fmt.Printf("Loop count: %d", count)
+}
+
 type Grid [][]Pos
+
+func (g Grid) copy() Grid {
+	var duplicate Grid
+	duplicate = make(Grid, len(g))
+	for i := range g {
+		duplicate[i] = make([]Pos, len(g[i]))
+		copy(duplicate[i], g[i])
+	}
+	return duplicate
+}
 
 type Pos struct {
 	IsWall       bool
@@ -124,7 +162,8 @@ func makeGridFromFile(filename string) (Grid, Player, error) {
 	return grid, player, nil
 }
 
-func processPath(grid Grid, player Player) {
+// Returns true if the guard is stuck in a loop
+func processPath(grid Grid, player Player) bool {
 	grid[player.Y][player.X].markVisited(player)
 
 Finished:
@@ -158,7 +197,7 @@ Finished:
 				panic(err)
 			}
 			if hasVisited {
-				break Finished
+				return true
 			}
 			player.move()
 			grid[player.Y][player.X].markVisited(player)
@@ -167,6 +206,7 @@ Finished:
 			grid[player.Y][player.X].markVisited(player)
 		}
 	}
+	return false
 }
 
 func (p *Pos) markVisited(player Player) {
